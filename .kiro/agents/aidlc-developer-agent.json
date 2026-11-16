@@ -1,0 +1,166 @@
+{
+  "name": "aidlc-developer-agent",
+  "description": "AI-DLC Developer Agent - delegation target for reverse-engineering (2.1), user-stories mob collaboration (2.4), code-generation (3.5), and swarm units. Use for delegated implementation tasks.",
+  "prompt": "file://aidlc-developer-agent.md",
+  "includeMcpJson": true,
+  "tools": [
+    "@aws-iac",
+    "@aws-mcp",
+    "@aws-pricing",
+    "@aws-serverless",
+    "@context7",
+    "read",
+    "shell",
+    "thinking",
+    "write"
+  ],
+  "allowedTools": [
+    "fs_read",
+    "thinking"
+  ],
+  "toolsSettings": {
+    "execute_bash": {
+      "allowedCommands": [
+        "aidlc engine .*",
+        "date -u( .*)?"
+      ],
+      "deniedCommands": [
+        "([^\\s]*/)?rm( [^\\s]+)* -[A-Za-z]*[rR][A-Za-z]*( .*)?",
+        "([^\\s]*/)?rm( [^\\s]+)* --recursive( .*)?",
+        "([^\\s]*/)?git( -[^\\s]+( (\"[^\"]*\"|'[^']*'|[^\\s]+))?)* push( .*)?"
+      ]
+    },
+    "fs_write": {
+      "allowedPaths": [
+        "aidlc/spaces/**"
+      ]
+    }
+  },
+  "resources": [
+    "file://.kiro/agents/aidlc-developer-agent.md",
+    "file://.kiro/knowledge/aidlc-developer-agent/*.md",
+    "file://.kiro/knowledge/aidlc-shared/*.md",
+    "file://aidlc/spaces/default/memory/**/*.md"
+  ],
+  "hooks": [
+    {
+      "name": "postToolUse-0",
+      "trigger": "postToolUse",
+      "matcher": "write",
+      "action": {
+        "type": "command",
+        "command": "aidlc engine adapter kiro audit-and-sensors"
+      },
+      "timeout": 120
+    },
+    {
+      "name": "preToolUse-0",
+      "trigger": "preToolUse",
+      "matcher": "execute_bash",
+      "action": {
+        "type": "command",
+        "command": "aidlc engine adapter kiro state-transition-guard aidlc-developer-agent"
+      },
+      "timeout": 15
+    },
+    {
+      "name": "preToolUse-1",
+      "trigger": "preToolUse",
+      "matcher": "write",
+      "action": {
+        "type": "command",
+        "command": "aidlc engine adapter kiro review-freeze"
+      },
+      "timeout": 15
+    },
+    {
+      "name": "preToolUse-2",
+      "trigger": "preToolUse",
+      "matcher": "execute_bash",
+      "action": {
+        "type": "command",
+        "command": "aidlc engine adapter kiro review-freeze"
+      },
+      "timeout": 15
+    },
+    {
+      "name": "preToolUse-3",
+      "trigger": "preToolUse",
+      "matcher": "write",
+      "action": {
+        "type": "command",
+        "command": "aidlc engine adapter kiro plan-approval-guard"
+      },
+      "timeout": 15
+    },
+    {
+      "name": "preToolUse-4",
+      "trigger": "preToolUse",
+      "matcher": "execute_bash",
+      "action": {
+        "type": "command",
+        "command": "aidlc engine adapter kiro plan-approval-guard"
+      },
+      "timeout": 15
+    }
+  ],
+  "permissions": {
+    "rules": [
+      {
+        "capability": "shell",
+        "match": [
+          "aidlc engine *",
+          "date -u *",
+          "date -u"
+        ],
+        "effect": "allow"
+      },
+      {
+        "capability": "shell",
+        "match": [
+          "*/rm * -*",
+          "*/rm -*",
+          "rm * -*",
+          "rm -*",
+          "*/rm * --recursive *",
+          "*/rm * --recursive",
+          "*/rm --recursive *",
+          "*/rm --recursive",
+          "rm * --recursive *",
+          "rm * --recursive",
+          "rm --recursive *",
+          "rm --recursive",
+          "*/git -* push *",
+          "*/git -* push",
+          "*/git push *",
+          "*/git push",
+          "git -* push *",
+          "git -* push",
+          "git push *",
+          "git push"
+        ],
+        "effect": "deny"
+      },
+      {
+        "capability": "fs_write",
+        "match": [
+          "aidlc/spaces/**"
+        ],
+        "effect": "allow"
+      },
+      {
+        "capability": "fs_read",
+        "effect": "allow"
+      },
+      {
+        "capability": "skill",
+        "effect": "allow"
+      }
+    ]
+  },
+  "kiroUpgrade": {
+    "revision": 3,
+    "fingerprint": "sha256:0ff810e93e4695954a1b02e1b5b5921865e7c20dcd925b8b58ab22e8121e064b",
+    "source": "sha256:654cb07dae91dd82e286941f00596deca49067471394eec1c27bbba6f3d0b8d4"
+  }
+}

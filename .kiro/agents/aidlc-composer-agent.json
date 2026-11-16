@@ -1,0 +1,168 @@
+{
+  "name": "aidlc-composer-agent",
+  "description": "AI-DLC Composer Agent - delegation target for composing a workflow plan (front, report, or in-flight). Proposes the EXECUTE/SKIP grid; after human approval writes the composed scope data.",
+  "prompt": "file://aidlc-composer-agent.md",
+  "includeMcpJson": true,
+  "tools": [
+    "@aws-iac",
+    "@aws-mcp",
+    "@aws-pricing",
+    "@aws-serverless",
+    "@context7",
+    "read",
+    "shell",
+    "thinking",
+    "write"
+  ],
+  "allowedTools": [
+    "fs_read",
+    "thinking"
+  ],
+  "toolsSettings": {
+    "execute_bash": {
+      "allowedCommands": [
+        "aidlc engine .*",
+        "date -u( .*)?"
+      ],
+      "deniedCommands": [
+        "([^\\s]*/)?rm( [^\\s]+)* -[A-Za-z]*[rR][A-Za-z]*( .*)?",
+        "([^\\s]*/)?rm( [^\\s]+)* --recursive( .*)?",
+        "([^\\s]*/)?git( -[^\\s]+( (\"[^\"]*\"|'[^']*'|[^\\s]+))?)* push( .*)?"
+      ]
+    },
+    "fs_write": {
+      "allowedPaths": [
+        ".kiro/scopes/**",
+        ".kiro/tools/data/scope-grid.json"
+      ]
+    }
+  },
+  "resources": [
+    "file://.kiro/agents/aidlc-composer-agent.md",
+    "file://.kiro/scopes/*.md",
+    "file://.kiro/knowledge/aidlc-shared/*.md",
+    "file://aidlc/spaces/default/memory/**/*.md"
+  ],
+  "hooks": [
+    {
+      "name": "postToolUse-0",
+      "trigger": "postToolUse",
+      "matcher": "write",
+      "action": {
+        "type": "command",
+        "command": "aidlc engine adapter kiro audit-and-sensors"
+      },
+      "timeout": 120
+    },
+    {
+      "name": "preToolUse-0",
+      "trigger": "preToolUse",
+      "matcher": "execute_bash",
+      "action": {
+        "type": "command",
+        "command": "aidlc engine adapter kiro state-transition-guard aidlc-composer-agent"
+      },
+      "timeout": 15
+    },
+    {
+      "name": "preToolUse-1",
+      "trigger": "preToolUse",
+      "matcher": "write",
+      "action": {
+        "type": "command",
+        "command": "aidlc engine adapter kiro review-freeze"
+      },
+      "timeout": 15
+    },
+    {
+      "name": "preToolUse-2",
+      "trigger": "preToolUse",
+      "matcher": "execute_bash",
+      "action": {
+        "type": "command",
+        "command": "aidlc engine adapter kiro review-freeze"
+      },
+      "timeout": 15
+    },
+    {
+      "name": "preToolUse-3",
+      "trigger": "preToolUse",
+      "matcher": "write",
+      "action": {
+        "type": "command",
+        "command": "aidlc engine adapter kiro plan-approval-guard"
+      },
+      "timeout": 15
+    },
+    {
+      "name": "preToolUse-4",
+      "trigger": "preToolUse",
+      "matcher": "execute_bash",
+      "action": {
+        "type": "command",
+        "command": "aidlc engine adapter kiro plan-approval-guard"
+      },
+      "timeout": 15
+    }
+  ],
+  "permissions": {
+    "rules": [
+      {
+        "capability": "shell",
+        "match": [
+          "aidlc engine *",
+          "date -u *",
+          "date -u"
+        ],
+        "effect": "allow"
+      },
+      {
+        "capability": "shell",
+        "match": [
+          "*/rm * -*",
+          "*/rm -*",
+          "rm * -*",
+          "rm -*",
+          "*/rm * --recursive *",
+          "*/rm * --recursive",
+          "*/rm --recursive *",
+          "*/rm --recursive",
+          "rm * --recursive *",
+          "rm * --recursive",
+          "rm --recursive *",
+          "rm --recursive",
+          "*/git -* push *",
+          "*/git -* push",
+          "*/git push *",
+          "*/git push",
+          "git -* push *",
+          "git -* push",
+          "git push *",
+          "git push"
+        ],
+        "effect": "deny"
+      },
+      {
+        "capability": "fs_write",
+        "match": [
+          ".kiro/scopes/**",
+          ".kiro/tools/data/scope-grid.json"
+        ],
+        "effect": "allow"
+      },
+      {
+        "capability": "fs_read",
+        "effect": "allow"
+      },
+      {
+        "capability": "skill",
+        "effect": "allow"
+      }
+    ]
+  },
+  "kiroUpgrade": {
+    "revision": 3,
+    "fingerprint": "sha256:58e7b95c52c89af9ac5b5344b5fefc9d07a3557aa89017c30178fbc5c7209acc",
+    "source": "sha256:d396fdaefe9bb379f5defb76cb7f6bffd711f8caf829d73d8a15288b7788cf3f"
+  }
+}

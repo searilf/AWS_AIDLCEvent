@@ -1,0 +1,1 @@
+"Build an Infrastructure Health Monitoring Dashboard (mock EC2, RDS, ALB data; React/TypeScript/Vite/Vitest). Draft inputs: docs/01-demo-specification.md and docs/02-inception-decisions.md. Run Inception only; Construction unit C1 (CPU health classification and dashboard visualization) is to be left unimplemented."
