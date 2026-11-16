@@ -53,17 +53,58 @@ There is no `inception-approved` tag. Construction unit C1 is not implemented.
 Still open (draft only, from `docs/01-demo-specification.md`): CPU thresholds (<70 Healthy, 70-<90 Warning, >=90 Critical),
 invalid CPU rule (proposed Unknown), ALB Unknown, response time context-only, AC-01..AC-06.
 
-## 4. What the engineer should do next
+## 4. Next steps for the engineer (Kiro IDE)
 
-1. Clone and install: `git clone https://github.com/searilf/AWS_AIDLCEvent.git`, `npm install`, `npm run test`, `npm run build`.
-2. Install `aidlc` from the official release (https://github.com/awslabs/aidlc-workflows) and run `aidlc doctor --verbose`.
-3. Test the blocker first: start `kiro-cli chat`, send any message, then rerun `aidlc doctor --verbose`.
-   **Continue only if "Human-turn receipts" shows more than 0 HUMAN_TURN rows.** If it stays at 0, report the bug
-   to awslabs/aidlc-workflows with the evidence in section 2 item 1 and stop.
-4. If receipts work, agree with the owner how to handle items 2-4 of section 2. The clean option is to archive this
-   intent (`/aidlc intent archive 261116-health-dashboard`) and start a new one with `--scope health-dashboard-demo`,
-   reusing the answers in section 3. Do not use `AIDLC_SKIP_HUMAN_PRESENCE_GUARD` or any other guard bypass.
-5. After genuine Inception approval, tag `inception-approved`, then build C1 and tag `demo-completed`.
+The engineer works in **Kiro IDE**, not Kiro CLI. Note: this AI-DLC install targets the Kiro CLI harness
+(`AGENTS.md`); in Kiro IDE only the hooks in `.kiro/hooks/*.kiro.hook` run, so rehearse the whole flow before the event.
+
+### Step 1 - Get the project and check the baseline
+
+1. `git clone https://github.com/searilf/AWS_AIDLCEvent.git` and open the folder in Kiro IDE.
+2. In the Kiro IDE terminal: `npm install`, `npm run test`, `npm run build`. Record the real results
+   (the C1 tests are skipped on purpose; do not claim they passed).
+
+### Step 2 - Install and check AI-DLC
+
+1. Install `aidlc` from the official release: https://github.com/awslabs/aidlc-workflows
+2. In the Kiro IDE terminal, run `aidlc doctor`. Expect 0 problems; warnings are advisory.
+
+### Step 3 - Test the human-presence blocker FIRST (about 5 minutes)
+
+1. Press **Ctrl+Shift+P**, run **Developer: Reload Window** (Kiro IDE loads hooks at window start).
+2. Open the **Agent Hooks** panel and confirm `aidlc-record-human-turn` is listed and enabled.
+3. Send any short message in the Kiro IDE chat.
+4. In the terminal, run `aidlc doctor --verbose` and find the line **"Human-turn receipts"**.
+   - **More than 0 HUMAN_TURN rows:** human approvals work on this machine. Go to Step 4.
+   - **Still 0:** the same bug as section 2 item 1. AI-DLC approval gates (including the live demo) will refuse every
+     answer. Stop, tell the owner, and report the bug to awslabs/aidlc-workflows with the evidence in section 2.
+
+### Step 4 - Restart Inception cleanly (only if Step 3 passed)
+
+Agree with the owner first. The recommended path:
+
+1. In Kiro IDE chat: `/aidlc intent archive 261116-health-dashboard` (this intent has a non-genuine approval and the
+   wrong `poc` scope; see section 2).
+2. Start a new intent on the approved plan: `/aidlc --scope health-dashboard-demo` followed by the project description.
+3. Answer the questions with the owner, reusing the decisions in section 3. The owner must give every approval
+   in the chat; the engineer does not approve on the owner's behalf.
+4. Never use `AIDLC_SKIP_HUMAN_PRESENCE_GUARD` or any other guard bypass. If a gate refuses an answer, stop and investigate.
+
+### Step 5 - Before the event
+
+1. After genuine Inception approval: commit, then `git tag inception-approved`.
+2. Build C1 through AI-DLC Construction (CPU classification, status badges, summary cards, enable the C1 tests),
+   run `npm run test` and `npm run build`, commit, then `git tag demo-completed`.
+3. Rehearse the live change request (classify ALB by response time; get the thresholds from the owner), time it
+   against the 10-12 minute slot, then `git tag cr-completed` as the fallback.
+4. Check the Kiro account used on stage has enough usage left (the owner's account hit its monthly limit).
+5. Push branches and tags only with the owner's permission: `git push origin master --tags`.
+
+### Step 6 - On the day
+
+1. Start from `demo-completed`: show the dashboard and the AI-DLC record (requirements, unit plan, audit trail).
+2. Run the change request live in Kiro IDE with the owner or presenter giving the approvals.
+3. If it stalls, `git checkout cr-completed` and show the rehearsed result, stating that it is the rehearsal run.
 
 ## 5. Security
 
