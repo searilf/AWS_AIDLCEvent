@@ -105,8 +105,75 @@ Agree with the owner first. The recommended path:
 1. Start from `demo-completed`: show the dashboard and the AI-DLC record (requirements, unit plan, audit trail).
 2. Run the change request live in Kiro IDE with the owner or presenter giving the approvals.
 3. If it stalls, `git checkout cr-completed` and show the rehearsed result, stating that it is the rehearsal run.
+   Full script and prompts: section 5.
 
-## 5. Security
+## 5. Live demo script - 10 minutes (Kiro IDE)
+
+Ten minutes is realistic only if everything below is prepared before the event. On stage, only the change
+request runs. This timing has not been measured yet; confirm it in rehearsal.
+
+### 5.1 Ready before going on stage
+
+- Repo checked out at tag `demo-completed` (C1 built, tests passing).
+- The short change-request scope `cr-alb-latency` exists (created in rehearsal, see 5.2).
+- `aidlc doctor --verbose` shows Human-turn receipts greater than 0.
+- The Kiro account used on stage has usage left.
+- One full rehearsal finished in 8 minutes or less, and tag `cr-completed` exists as the fallback.
+- **ALB thresholds confirmed by the owner.** The values below (300 ms / 800 ms) are PROPOSED placeholders, not approved.
+
+### 5.2 Rehearsal prompt (before the event, in Kiro IDE chat)
+
+Creates a 3-stage plan for the change request. The owner approves the plan at its gate.
+
+```
+/aidlc compose "Small change request on the existing health dashboard: change how the ALB health status is classified. Only these stages: requirements-analysis, code-generation, build-and-test. Skip every Ideation stage, reverse-engineering, design stages, CI and all Operation stages. Name the scope cr-alb-latency, depth Minimal."
+```
+
+Optional, to save time (a recorded AI-DLC setting, not a bypass; agree it with the owner):
+
+```
+/aidlc --review none
+```
+
+### 5.3 On-stage prompt (one message)
+
+```
+/aidlc --new-intent --scope cr-alb-latency "Change request CR-01: classify the ALB by response time instead of showing Unknown.
+Rules (already approved by the product owner): responseTimeMs < 300 = Healthy; 300 to < 800 = Warning; >= 800 = Critical; null or invalid (< 0, NaN) = Unknown.
+CPU rules for EC2 and RDS stay unchanged. Response time still does not affect EC2 or RDS status.
+Change only src/domain/health.ts (classifyResource), the dashboard summary counts, and tests in tests/health.test.ts.
+Add boundary tests for 0, 299, 300, 799, 800 ms and null.
+Expected result with the fixture: ALB (120 ms) becomes Healthy; counts become Healthy 2, Warning 1, Critical 1, Unknown 0.
+Mock data only. No new dependencies, no AWS calls. Do not ask clarifying questions unless a rule above is contradictory."
+```
+
+Replace 300 / 800 with the owner's approved values before rehearsal, and update the boundary tests and the
+expected result to match. With the current fixture the ALB has `responseTimeMs: 120`.
+
+### 5.4 What to type during the run
+
+- Interaction mode question: `1` (Guide me).
+- Summary confirmation and each approval gate: `1` (Looks correct / Approve). The owner or presenter gives
+  the approval out loud; the engineer types it only on their instruction.
+- If the agent asks anything else: `Use the rules in CR-01 exactly.`
+
+### 5.5 Timing plan
+
+| Minute | What the audience sees |
+|---|---|
+| 0-2 | Dashboard at `demo-completed` (ALB shows Unknown) and a quick look at the AI-DLC record |
+| 2-3 | Engineer types the prompt from 5.3 |
+| 3-5 | Requirements analysis, then approval |
+| 5-8 | Code generation: code and tests written, then approval |
+| 8-9 | Build and test: real `npm run test` and `npm run build` output, then approval |
+| 9-10 | Refresh the dashboard: ALB changes from Unknown to Healthy, summary counts change |
+
+### 5.6 If it runs over
+
+At minute 8, if it is not finished: stop, run `git checkout cr-completed` and `npm run dev`, and tell the
+audience: "This is the rehearsal run of the same change request." Never claim tests passed if they did not run.
+
+## 6. Security
 
 No AWS credentials, tokens or secrets are in this repository. Machine-local AI-DLC state (`.aidlc-engine/`,
 cursors, clone id, turn counter) is excluded by `.gitignore`.
